@@ -32,6 +32,15 @@ async function connectToServer(address) {
   const config = serverConfig(address);
   serverBase = config.url.origin;
   document.querySelector("#server-address").textContent = config.url.host;
+  try {
+    const response = await fetch(`${serverBase}/api/config`);
+    if (!response.ok) throw new Error("Server returned an error");
+    const { iceServers } = await response.json();
+    config.peerOptions.config = { iceServers };
+  } catch {
+    // An explicit fallback prevents PeerJS from using its obsolete public TURN hosts.
+    config.peerOptions.config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+  }
   peerClient = new Peer(config.peerOptions);
 
   peerClient.on("open", async (id) => {

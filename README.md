@@ -16,6 +16,20 @@ Open `http://localhost:3030`. The initial server prompt, peer selection, change-
 
 Connected clients now register live presence with the signaling server. The peer list contains only currently connected PeerJS clients and is refreshed every two seconds.
 
+### NAT traversal and TURN
+
+Fine Remote overrides PeerJS's built-in ICE server list because its legacy public TURN hostnames are no longer reliable. By default, clients use Google STUN for direct peer-to-peer connectivity. If either client is behind a restrictive or symmetric NAT, configure a TURN server on the signaling server before starting it:
+
+```bash
+export FINE_REMOTE_ICE_SERVERS='[
+  {"urls":"stun:stun.l.google.com:19302"},
+  {"urls":"turn:turn.example.com:3478","username":"fine-remote","credential":"replace-me"}
+]'
+npm start
+```
+
+The value must be a JSON array of WebRTC ICE server objects. It is returned to clients by `/api/config`, so use time-limited TURN credentials in production. TURN runs as a separate service (for example, coturn); the PeerJS server only provides signaling.
+
 ## Launch the desktop client
 
 ```bash

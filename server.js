@@ -7,6 +7,7 @@ const { getFfmpegStatus } = require("./src/ffmpeg");
 
 function createFineRemoteServer({ port = Number(process.env.PORT || 3030) } = {}) {
   const app = express();
+  const iceServers = parseIceServers(process.env.FINE_REMOTE_ICE_SERVERS);
   const connected = new Map();
   const presence = new Map();
   const startedAt = Date.now();
@@ -42,6 +43,10 @@ function createFineRemoteServer({ port = Number(process.env.PORT || 3030) } = {}
       peerCount: connected.size,
       ffmpeg: getFfmpegStatus(),
     });
+  });
+
+  app.get("/api/config", (_request, response) => {
+    response.json({ iceServers });
   });
 
   app.get("/api/peers", (request, response) => {
@@ -85,6 +90,26 @@ function clean(value, maxLength) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
+function parseIceServers(value) {
+  if (!value) return [{ urls: "stun:stun.l.google.com:19302" }];
+
+  let servers;
+  try {
+    servers = JSON.parse(value);
+  } catch {
+    throw new Error("FINE_REMOTE_ICE_SERVERS must be valid JSON");
+  }
+
+  if (!Array.isArray(servers) || !servers.length || servers.some((server) => {
+    const urls = typeof server?.urls === "string" ? [server.urls] : server?.urls;
+    return !Array.isArray(urls) || !urls.length || urls.some((url) => !/^stuns?:|^turns?:/.test(url));
+  })) {
+    throw new Error("FINE_REMOTE_ICE_SERVERS must be a non-empty array of WebRTC ICE server objects");
+  }
+
+  return servers;
+}
+
 if (require.main === module) {
   const server = createFineRemoteServer();
   if (process.argv.includes("--client")) {
@@ -101,4 +126,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { createFineRemoteServer };
+module.exports = { createFineRemoteServer, parseIceServers };
