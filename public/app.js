@@ -8,6 +8,9 @@ let selectedId = null;
 let serverBase = window.location.origin;
 let refreshTimer;
 let presenceTimer;
+let pendingConnection;
+let requestedPeerId;
+let outgoingDisplayStream;
 
 function serverConfig(value) {
   const raw = value.trim() || window.location.host;
@@ -53,6 +56,7 @@ async function connectToServer(address) {
     presenceTimer = setInterval(publishPresence, 15000);
   });
   peerClient.on("connection", acceptConnection);
+  peerClient.on("call", receiveDesktopStream);
   peerClient.on("disconnected", () => setConnectionState("Reconnecting…", false));
   peerClient.on("error", (error) => {
     setConnectionState("Connection error", false);
@@ -137,23 +141,76 @@ function showSelectedPeer() {
 function requestConnection() {
   const remote = peers.find((item) => item.id === selectedId);
   if (!remote || !peerClient?.open) return;
+  if (pendingConnection) pendingConnection.close();
+  requestedPeerId = remote.id;
   requestModal.classList.add("open");
-  const connection = peerClient.connect(remote.id, { reliable: true });
-  connection.on("open", () => connection.send({ type: "connection-request", from: peerClient.id }));
-  connection.on("data", (message) => {
-    if (message?.type === "connection-response") {
+  document.querySelector("#request-title").textContent = "Connecting to peer…";
+  document.querySelector("#request-error").textContent = "";
+  pendingConnection = FineRemotePeerSession.request(peerClient, remote.id, {
+    onOpen: () => { document.querySelector("#request-title").textContent = "Waiting for approval"; },
+    onResponse: (message, connection) => {
+      pendingConnection = message.accepted ? connection : null;
       document.querySelector("#request-title").textContent = message.accepted ? "Connection approved" : "Connection declined";
-    }
+    },
+    onError: (error) => {
+      pendingConnection = null;
+      document.querySelector("#request-title").textContent = "Could not connect";
+      document.querySelector("#request-error").textContent = error.message;
+    },
   });
-  connection.on("error", () => requestModal.classList.remove("open"));
 }
 
 function acceptConnection(connection) {
-  connection.on("data", (message) => {
-    if (message?.type !== "connection-request") return;
-    const accepted = window.confirm(`Peer ${message.from} is requesting a connection. Allow it?`);
-    connection.send({ type: "connection-response", accepted });
+  FineRemotePeerSession.answer(
+    connection,
+    (from) => window.confirm(`Peer ${from} wants to view your desktop. Share your screen?`),
+    shareDesktopWith,
+  );
+}
+
+async function shareDesktopWith(remoteId) {
+  try {
+    outgoingDisplayStream?.getTracks().forEach((track) => track.stop());
+    outgoingDisplayStream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: { ideal: 60, max: 60 } },
+      audio: false,
+    });
+    const call = peerClient.call(remoteId, outgoingDisplayStream, {
+      metadata: { type: "desktop-stream" },
+    });
+    const sharedStream = outgoingDisplayStream;
+    const stopSharing = () => {
+      sharedStream.getTracks().forEach((track) => track.stop());
+      if (outgoingDisplayStream === sharedStream) outgoingDisplayStream = null;
+    };
+    call.on("close", stopSharing);
+    call.on("error", stopSharing);
+    sharedStream.getVideoTracks()[0]?.addEventListener("ended", () => call.close());
+  } catch (error) {
+    console.error("Desktop sharing was not started:", error);
+  }
+}
+
+function receiveDesktopStream(call) {
+  if (call.peer !== requestedPeerId || call.metadata?.type !== "desktop-stream") {
+    call.close();
+    return;
+  }
+  call.answer();
+  call.on("stream", (stream) => {
+    document.querySelector("#remote-video").srcObject = stream;
+    document.querySelector("#screen-preview").classList.add("streaming");
+    document.querySelector("#preview-state-label").textContent = "Live";
+    requestModal.classList.remove("open");
   });
+  call.on("close", stopViewing);
+  call.on("error", stopViewing);
+}
+
+function stopViewing() {
+  document.querySelector("#remote-video").srcObject = null;
+  document.querySelector("#screen-preview").classList.remove("streaming");
+  document.querySelector("#preview-state-label").textContent = "Ready to connect";
 }
 
 function elapsed(timestamp) {
@@ -181,7 +238,12 @@ document.querySelector("#server-connect").addEventListener("click", () => connec
 document.querySelector("#close-server").addEventListener("click", () => serverModal.classList.remove("open"));
 document.querySelector("#change-server").addEventListener("click", () => serverModal.classList.add("open"));
 connectButton.addEventListener("click", requestConnection);
-document.querySelector("#cancel-request").addEventListener("click", () => requestModal.classList.remove("open"));
+document.querySelector("#cancel-request").addEventListener("click", () => {
+  pendingConnection?.close();
+  pendingConnection = null;
+  requestedPeerId = null;
+  requestModal.classList.remove("open");
+});
 
 document.querySelector("#server-input").value = window.location.host;
 connectToServer(window.location.host);

@@ -1,9 +1,13 @@
 const path = require("node:path");
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, desktopCapturer, session } = require("electron");
 
 const port = Number(process.env.FINE_REMOTE_SERVER_PORT || 3030);
 
 app.whenReady().then(() => {
+  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+    const sources = await desktopCapturer.getSources({ types: ["screen"] });
+    callback({ video: sources[0] });
+  });
   const window = new BrowserWindow({
     width: 1280,
     height: 820,

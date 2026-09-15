@@ -44,10 +44,10 @@ Fine Remote uses `ffmpeg-static`, which downloads a platform-specific FFmpeg bin
 ## Production architecture outline
 
 1. **Discovery and identity:** clients connect to the PeerJS server over TLS, publish a signed presence record (peer ID, display name, hostname, OS/version, connected timestamp, time-zone offset), and subscribe to presence changes. Authentication and authorization sit in front of discovery so peers only see approved devices.
-2. **Consent:** the controller opens a PeerJS data channel and sends a connection request. The host displays Allow/Deny locally. Only an explicit, short-lived approval starts capture and input channels. Both parties can terminate at any time.
+2. **Consent:** the controller opens one standard PeerJS data connection with the request in its connection metadata. The host displays Allow/Deny as soon as that channel opens and replies on the same channel. Only an explicit, short-lived approval starts capture and input channels. Both parties can terminate at any time.
 3. **Desktop capture:** a native client launches FFmpeg with platform capture (`ddagrab` on Windows, ScreenCaptureKit-compatible input on macOS, PipeWire on Linux). Encode with a hardware-backed, low-delay H.264 profile where possible and fall back to software `libx264` with `ultrafast`/`zerolatency` tuning.
 4. **Media transport:** WebRTC carries video for congestion control, NAT traversal, encryption, and real-time packet-loss feedback. A TURN service is required when direct connectivity fails. PeerJS data channels carry control input and telemetry, not a custom raw video protocol.
 5. **Adaptive quality:** offer 720p, 1080p, 1440p, native, and auto modes. A resolution change updates FFmpeg's scale stage and replaces the outbound WebRTC track without renegotiating the whole session. Auto mode uses RTT, loss, and available bitrate to step down before latency grows.
 6. **Telemetry:** sample decoded/rendered frames, WebRTC inbound stats, and transport loss once per second. Display FPS, current data rate, and dropped packets in the persistent bottom bar.
 
-The current client uses live signaling presence and PeerJS data connections. Native capture and WebRTC media wiring remain future work.
+The client uses live signaling presence, a PeerJS data connection for consent, and a PeerJS media call to send the approved desktop stream back to the requesting peer. In a browser, the sharing peer chooses a screen in the browser picker; the Electron client captures its primary screen after the user accepts the request.
