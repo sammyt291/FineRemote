@@ -11,6 +11,7 @@ let presenceTimer;
 let pendingConnection;
 let requestedPeerId;
 let outgoingDisplayStream;
+let serverHasTurn = false;
 
 function serverConfig(value) {
   const raw = value.trim() || window.location.host;
@@ -38,11 +39,13 @@ async function connectToServer(address) {
   try {
     const response = await fetch(`${serverBase}/api/config`);
     if (!response.ok) throw new Error("Server returned an error");
-    const { iceServers } = await response.json();
+    const { iceServers, hasTurn } = await response.json();
+    serverHasTurn = Boolean(hasTurn);
     config.peerOptions.config = { iceServers };
   } catch {
     // An explicit fallback prevents PeerJS from using its obsolete public TURN hosts.
     config.peerOptions.config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+    serverHasTurn = false;
   }
   peerClient = new Peer(config.peerOptions);
 
@@ -155,7 +158,11 @@ function requestConnection() {
     onError: (error) => {
       pendingConnection = null;
       document.querySelector("#request-title").textContent = "Could not connect";
-      document.querySelector("#request-error").textContent = error.message;
+      const turnHelp = serverHasTurn ? "" : " This server has no TURN relay configured; port-forwarding the signaling server alone does not make WebRTC peers reachable across every NAT. Configure FINE_REMOTE_ICE_SERVERS with a TURN server.";
+      document.querySelector("#request-error").textContent = `${error.message}${turnHelp}`;
+    },
+    onState: (state) => {
+      if (state === "checking") document.querySelector("#request-title").textContent = "Finding a route to peer…";
     },
   });
 }

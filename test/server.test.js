@@ -27,5 +27,8 @@ test("serves the ICE configuration to clients", async (t) => {
   const { port } = httpServer.address();
   const response = await fetch(`http://127.0.0.1:${port}/api/config`);
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { iceServers: [{ urls: "stun:stun.example.com:3478" }] });
+  assert.deepEqual(await response.json(), {
+    iceServers: [{ urls: "stun:stun.example.com:3478" }],
+    hasTurn: false,
+  });
 });

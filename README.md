@@ -30,6 +30,8 @@ npm start
 
 The value must be a JSON array of WebRTC ICE server objects. It is returned to clients by `/api/config`, so use time-limited TURN credentials in production. TURN runs as a separate service (for example, coturn); the PeerJS server only provides signaling.
 
+Port-forwarding the Fine Remote/PeerJS server only exposes signaling and discovery; it does not relay WebRTC traffic. Clients behind restrictive or symmetric NAT therefore require the TURN configuration above.
+
 ## Launch the desktop client
 
 ```bash

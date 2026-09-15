@@ -10,6 +10,7 @@ class FakeConnection extends EventEmitter {
     this.metadata = metadata;
     this.sent = [];
     this.closed = false;
+    this.open = false;
   }
   send(message) { this.sent.push(message); }
   close() { this.closed = true; }
@@ -51,4 +52,22 @@ test("rejects connections that are not requests", () => {
   const connection = new FakeConnection("unknown", {});
   answer(connection, assert.fail);
   assert.equal(connection.closed, true);
+});
+
+test("answers a request that is already open", () => {
+  const connection = new FakeConnection("requester", { type: "connection-request" });
+  connection.open = true;
+  answer(connection, () => true);
+  assert.deepEqual(connection.sent, [{ type: "connection-response", accepted: true }]);
+});
+
+test("reports PeerJS negotiation errors without waiting for the timeout", () => {
+  const peer = new EventEmitter();
+  peer.id = "local";
+  peer.connect = () => new FakeConnection("remote");
+  let reported;
+  request(peer, "remote", { onOpen: assert.fail, onResponse: assert.fail, onError: (error) => { reported = error; } });
+  peer.emit("error", Object.assign(new Error("Could not connect to peer remote"), { type: "peer-unavailable" }));
+  assert.equal(reported.message, "Could not connect to peer remote");
+  assert.equal(peer.listenerCount("error"), 0);
 });
