@@ -15,22 +15,22 @@
           <div><strong>Fine</strong><strong class="brand-accent">Remote</strong></div>
         </div>
 
-        <div class="connection-pill"><span class="pulse"></span> Connected</div>
+        <div class="connection-pill" id="connection-pill"><span class="pulse"></span> <span id="connection-label">Connecting…</span></div>
         <section class="server-card">
           <div class="eyebrow">CURRENT SERVER</div>
-          <div class="server-name">Europe Production</div>
-          <div class="server-address">peer.eu.fineremote.app</div>
+          <div class="server-name">Fine Remote signaling</div>
+          <div class="server-address" id="server-address">localhost:3030</div>
           <button class="icon-button" id="change-server" title="Change server" aria-label="Change server">↗</button>
         </section>
 
         <div class="peers-heading">
-          <span>AVAILABLE DESKTOPS</span><span class="count">3</span>
+          <span>CONNECTED PEERS</span><span class="count" id="peer-count">0</span>
         </div>
         <div class="peer-list" id="peer-list"></div>
 
         <div class="sidebar-footer">
           <span class="avatar">AS</span>
-          <div><strong>Alex Smith</strong><small>alex@fine.dev</small></div>
+          <div><strong>This client</strong><small id="own-peer-id">Connecting…</small></div>
           <button class="more-button" aria-label="Account menu">•••</button>
         </div>
       </aside>
@@ -44,7 +44,9 @@
           <div class="secure"><span>◆</span> End-to-end encrypted</div>
         </header>
 
-        <section class="device-panel" id="device-panel">
+        <section class="device-panel is-empty" id="device-panel">
+          <div class="empty-selection" id="empty-selection"><div class="preview-monitor">▣</div><h2>No peers connected</h2><p>Launch Fine Remote on another device and connect it to this server.</p></div>
+          <div id="device-details" hidden>
           <div class="device-hero">
             <div class="device-icon large">▣</div>
             <div class="device-title">
@@ -71,13 +73,14 @@
               <div class="fake-dock"><i></i><i></i><i></i><i></i><i></i></div>
             </div>
           </div>
+          </div>
         </section>
       </main>
 
       <footer class="statusbar">
-        <div><span class="signal">▥</span> Server latency <strong>24 ms</strong></div>
+        <div><span class="signal">▥</span> Server latency <strong id="latency">—</strong></div>
         <div class="status-stats"><span>FPS <strong>—</strong></span><span>DATA RATE <strong>—</strong></span><span>DROPPED <strong>—</strong></span></div>
-        <div><span class="status-dot"></span> All systems operational</div>
+        <div><span class="status-dot"></span> <span id="ffmpeg-state">Checking FFmpeg…</span></div>
       </footer>
     </div>
 
@@ -89,7 +92,8 @@
         <h2>Connect to a server</h2>
         <p>Enter the address provided by your administrator to discover available desktops.</p>
         <label for="server-input">SERVER ADDRESS</label>
-        <div class="input-wrap"><span>◇</span><input id="server-input" value="peer.eu.fineremote.app" autocomplete="off" /><i></i></div>
+        <div class="input-wrap"><span>◇</span><input id="server-input" value="localhost:3030" autocomplete="off" /><i></i></div>
+        <div class="server-error" id="server-error" role="alert"></div>
         <button class="primary-button" id="server-connect">Connect securely <span>→</span></button>
         <div class="modal-foot">◆ &nbsp; Your connection is encrypted end-to-end</div>
       </div>
@@ -99,13 +103,14 @@
       <div class="modal request-modal">
         <div class="request-device">▣<span></span></div>
         <div class="eyebrow">CONNECTION REQUEST</div>
-        <h2>Waiting for approval</h2>
+        <h2 id="request-title">Waiting for approval</h2>
         <p>A request was sent to <strong id="request-name">Design Studio</strong>. The remote user must allow this connection.</p>
         <div class="waiting"><i></i><i></i><i></i></div>
         <button class="secondary-button" id="cancel-request">Cancel request</button>
       </div>
     </div>
 
+    <script src="/vendor/peerjs/peerjs.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
