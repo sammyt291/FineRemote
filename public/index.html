@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090d14" />
+    <title>Fine Remote</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><span></span></div>
+          <div><strong>Fine</strong><strong class="brand-accent">Remote</strong></div>
+        </div>
+
+        <div class="connection-pill"><span class="pulse"></span> Connected</div>
+        <section class="server-card">
+          <div class="eyebrow">CURRENT SERVER</div>
+          <div class="server-name">Europe Production</div>
+          <div class="server-address">peer.eu.fineremote.app</div>
+          <button class="icon-button" id="change-server" title="Change server" aria-label="Change server">↗</button>
+        </section>
+
+        <div class="peers-heading">
+          <span>AVAILABLE DESKTOPS</span><span class="count">3</span>
+        </div>
+        <div class="peer-list" id="peer-list"></div>
+
+        <div class="sidebar-footer">
+          <span class="avatar">AS</span>
+          <div><strong>Alex Smith</strong><small>alex@fine.dev</small></div>
+          <button class="more-button" aria-label="Account menu">•••</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <h1>Remote desktop</h1>
+            <p>Select a device to view details and connect.</p>
+          </div>
+          <div class="secure"><span>◆</span> End-to-end encrypted</div>
+        </header>
+
+        <section class="device-panel" id="device-panel">
+          <div class="device-hero">
+            <div class="device-icon large">▣</div>
+            <div class="device-title">
+              <div class="availability"><span></span> AVAILABLE</div>
+              <h2 id="detail-name">Design Studio</h2>
+              <p id="detail-id">Peer ID · ds-6f2a-e91c</p>
+            </div>
+            <button class="connect-button" id="connect-button"><span>↗</span> Connect</button>
+          </div>
+
+          <div class="divider"></div>
+          <div class="details-grid">
+            <div class="detail-item"><span class="detail-icon">▤</span><div><small>HOSTNAME</small><strong id="detail-host">DESIGN-MAC-04</strong></div></div>
+            <div class="detail-item"><span class="detail-icon">◈</span><div><small>OPERATING SYSTEM</small><strong id="detail-os">macOS Sonoma 14.5</strong></div></div>
+            <div class="detail-item"><span class="detail-icon">◷</span><div><small>CONNECTED FOR</small><strong id="detail-connected">2 hours, 14 min</strong></div></div>
+            <div class="detail-item"><span class="detail-icon">◴</span><div><small>LOCAL TIME</small><strong id="detail-time">10:42 AM <em>GMT−7</em></strong></div></div>
+          </div>
+
+          <div class="preview-wrap">
+            <div class="preview-toolbar"><span>LIVE PREVIEW</span><span class="preview-state"><i></i> Ready to connect</span></div>
+            <div class="screen-preview">
+              <div class="screen-glow"></div>
+              <div class="preview-copy"><div class="preview-monitor">▣</div><strong>Ready when you are</strong><p>The remote user will be asked to approve<br />your connection request.</p></div>
+              <div class="fake-dock"><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="statusbar">
+        <div><span class="signal">▥</span> Server latency <strong>24 ms</strong></div>
+        <div class="status-stats"><span>FPS <strong>—</strong></span><span>DATA RATE <strong>—</strong></span><span>DROPPED <strong>—</strong></span></div>
+        <div><span class="status-dot"></span> All systems operational</div>
+      </footer>
+    </div>
+
+    <div class="modal-backdrop open" id="server-modal">
+      <div class="modal server-modal">
+        <button class="close-modal" id="close-server" aria-label="Close">×</button>
+        <div class="modal-icon">⌁</div>
+        <div class="eyebrow">WELCOME TO FINE REMOTE</div>
+        <h2>Connect to a server</h2>
+        <p>Enter the address provided by your administrator to discover available desktops.</p>
+        <label for="server-input">SERVER ADDRESS</label>
+        <div class="input-wrap"><span>◇</span><input id="server-input" value="peer.eu.fineremote.app" autocomplete="off" /><i></i></div>
+        <button class="primary-button" id="server-connect">Connect securely <span>→</span></button>
+        <div class="modal-foot">◆ &nbsp; Your connection is encrypted end-to-end</div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="request-modal">
+      <div class="modal request-modal">
+        <div class="request-device">▣<span></span></div>
+        <div class="eyebrow">CONNECTION REQUEST</div>
+        <h2>Waiting for approval</h2>
+        <p>A request was sent to <strong id="request-name">Design Studio</strong>. The remote user must allow this connection.</p>
+        <div class="waiting"><i></i><i></i><i></i></div>
+        <button class="secondary-button" id="cancel-request">Cancel request</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
