@@ -46,7 +46,7 @@ function createFineRemoteServer({ port = Number(process.env.PORT || 3030) } = {}
   });
 
   app.get("/api/config", (_request, response) => {
-    response.json({ iceServers });
+    response.json({ iceServers, hasTurn: iceServers.some(isTurnServer) });
   });
 
   app.get("/api/peers", (request, response) => {
@@ -84,6 +84,11 @@ function createFineRemoteServer({ port = Number(process.env.PORT || 3030) } = {}
   app.get("/health", (_request, response) => response.json({ status: "ok" }));
 
   return { app, httpServer, peerServer };
+}
+
+function isTurnServer(server) {
+  const urls = typeof server.urls === "string" ? [server.urls] : server.urls;
+  return urls.some((url) => /^turns?:/i.test(url));
 }
 
 function clean(value, maxLength) {
